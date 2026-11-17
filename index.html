@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAKE & BITE - Cafe Ordering & Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cafe: {
+                            bg: '#f7f1e5',
+                            card: '#ffffff',
+                            dark: '#3a2618',
+                            brown: '#4a3319',
+                            gold: '#e68a35',
+                            goldHover: '#d0782a',
+                            accent: '#f3a953',
+                            light: '#faf6ed'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f7f1e5;
+            color: #3a2618;
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f7f1e5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e68a35;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col justify-between selection:bg-cafe-gold selection:text-white">
+
+    <!-- Top Notification Toast -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 bg-cafe-dark text-white px-5 py-3 rounded-2xl shadow-xl flex items-center space-x-3 border border-cafe-gold/30">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-cafe-gold text-lg"></i>
+        <span id="toast-msg" class="font-medium text-sm">Action completed successfully</span>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div class="max-w-md w-full mx-auto bg-cafe-bg h-full flex flex-col shadow-2xl relative overflow-hidden sm:my-4 sm:rounded-3xl sm:border-4 sm:border-cafe-dark/10">
+        
+        <!-- HEADER -->
+        <header class="bg-cafe-bg px-5 pt-5 pb-3 flex items-center justify-between sticky top-0 z-30 border-b border-cafe-dark/5">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 rounded-full bg-cafe-dark text-cafe-gold flex items-center justify-center font-bold text-lg shadow-md border-2 border-cafe-gold/50">
+                    <i class="fa-solid fa-mug-hot"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base text-cafe-dark tracking-wide flex items-center gap-1.5">
+                        BAKE & BITE <span class="text-xs px-2 py-0.5 bg-cafe-gold/20 text-cafe-gold rounded-full font-semibold">Table #4</span>
+                    </h1>
+                    <p class="text-xs text-cafe-dark/70 font-medium">Good Day, Food Lover <i class="fa-solid fa-hand-holding-heart text-cafe-gold"></i></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Host Login Toggle Button -->
+                <button onclick="openHostLoginModal()" class="w-10 h-10 rounded-full bg-white shadow-sm border border-cafe-dark/10 flex items-center justify-center text-cafe-dark hover:bg-cafe-gold hover:text-white transition-all relative group" title="Host Management Login">
+                    <i class="fa-solid fa-user-shield text-sm"></i>
+                    <span class="absolute -bottom-7 right-0 bg-cafe-dark text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Host Login</span>
+                </button>
+                <!-- Cart Header Icon -->
+                <button onclick="switchTab('cart')" class="w-10 h-10 rounded-full bg-white shadow-sm border border-cafe-dark/10 flex items-center justify-center text-cafe-dark hover:bg-cafe-gold hover:text-white transition-all relative">
+                    <i class="fa-solid fa-bag-shopping text-sm"></i>
+                    <span id="cart-badge" class="absolute -top-1 -right-1 bg-cafe-gold text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow">0</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- DYNAMIC CONTENT VIEW AREA -->
+        <main id="main-content" class="flex-1 overflow-y-auto pb-24 px-4 pt-3">
+            <!-- Dynamically rendered tab content inserted via JS -->
+        </main>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-cafe-dark/10 px-6 py-2.5 flex justify-between items-center z-30 shadow-lg">
+            <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center text-cafe-gold transition-all">
+                <i class="fa-solid fa-house text-lg mb-0.5"></i>
+                <span class="text-[11px] font-semibold">Home</span>
+            </button>
+            <button onclick="switchTab('cart')" id="nav-cart" class="flex flex-col items-center text-cafe-dark/60 hover:text-cafe-gold transition-all relative">
+                <i class="fa-solid fa-cart-shopping text-lg mb-0.5"></i>
+                <span class="text-[11px] font-semibold">Cart</span>
+                <span id="nav-cart-dot" class="absolute top-0 right-1 w-2 h-2 bg-cafe-gold rounded-full hidden"></span>
+            </button>
+            <button onclick="switchTab('favorites')" id="nav-favorites" class="flex flex-col items-center text-cafe-dark/60 hover:text-cafe-gold transition-all">
+                <i class="fa-solid fa-heart text-lg mb-0.5"></i>
+                <span class="text-[11px] font-semibold">Favorite</span>
+            </button>
+            <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center text-cafe-dark/60 hover:text-cafe-gold transition-all">
+                <i class="fa-solid fa-user text-lg mb-0.5"></i>
+                <span class="text-[11px] font-semibold">Profile</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- ITEM DETAIL MODAL -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center transition-opacity opacity-0 pointer-events-none duration-300">
+        <div id="detail-modal-box" class="bg-white w-full max-w-md sm:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-y-auto transform translate-y-full transition-transform duration-300 shadow-2xl p-6 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-item-title" class="text-xl font-bold text-cafe-dark">Item Details</h3>
+                <button onclick="closeDetailModal()" class="w-8 h-8 rounded-full bg-cafe-bg text-cafe-dark flex items-center justify-center hover:bg-cafe-gold hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="relative rounded-2xl overflow-hidden h-48 mb-4 bg-cafe-light shadow-inner flex items-center justify-center">
+                <img id="modal-item-img" src="https://placehold.co/400x250/e68a35/ffffff?text=Bake+%26+Bite" alt="Item Image" class="w-full h-full object-cover">
+                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-cafe-dark shadow">
+                    <i class="fa-solid fa-star text-amber-500 mr-1"></i> <span id="modal-item-rating">4.8</span>/5
+                </div>
+            </div>
+
+            <p id="modal-item-desc" class="text-xs text-cafe-dark/70 mb-4 leading-relaxed">Freshly prepared with authentic ingredients at BAKE & BITE. Served piping hot.</p>
+
+            <!-- Size Selection (if applicable) -->
+            <div id="modal-size-container" class="mb-4">
+                <label class="block text-xs font-bold text-cafe-dark uppercase tracking-wider mb-2">Select Size</label>
+                <div id="modal-sizes" class="grid grid-cols-2 gap-2">
+                    <!-- Size buttons injected -->
+                </div>
+            </div>
+
+            <!-- Customizations -->
+            <div id="modal-custom-container" class="mb-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-cafe-dark uppercase tracking-wider mb-1.5">Sugar Level</label>
+                    <div class="grid grid-cols-3 gap-2 text-xs font-medium" id="sugar-options">
+                        <button onclick="setCustomization('sugar', 'Normal', this)" class="py-2 rounded-xl border border-cafe-gold bg-cafe-gold text-white transition-all">Normal</button>
+                        <button onclick="setCustomization('sugar', 'Less', this)" class="py-2 rounded-xl border border-cafe-dark/20 text-cafe-dark hover:border-cafe-gold transition-all">Less</button>
+                        <button onclick="setCustomization('sugar', 'No Sugar', this)" class="py-2 rounded-xl border border-cafe-dark/20 text-cafe-dark hover:border-cafe-gold transition-all">No Sugar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quantity & Add to Cart -->
+            <div class="flex items-center justify-between mt-auto pt-4 border-t border-cafe-dark/10">
+                <div class="flex items-center space-x-3 bg-cafe-bg px-3 py-2 rounded-2xl border border-cafe-dark/10">
+                    <button onclick="adjustModalQty(-1)" class="w-7 h-7 rounded-xl bg-white shadow text-cafe-dark font-bold hover:bg-cafe-gold hover:text-white transition-colors">-</button>
+                    <span id="modal-qty" class="font-bold text-base w-6 text-center">1</span>
+                    <button onclick="adjustModalQty(1)" class="w-7 h-7 rounded-xl bg-white shadow text-cafe-dark font-bold hover:bg-cafe-gold hover:text-white transition-colors">+</button>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] text-cafe-dark/60 font-semibold uppercase">Total Price</div>
+                    <div id="modal-total-price" class="text-xl font-black text-cafe-dark">₹0</div>
+                </div>
+            </div>
+
+            <button onclick="addModalItemToCart()" class="mt-4 w-full py-3.5 bg-cafe-gold hover:bg-cafe-goldHover text-white font-bold rounded-2xl shadow-lg shadow-cafe-gold/30 transition-all flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-cart-plus"></i>
+                <span>Add to Cart</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- HOST LOGIN MODAL -->
+    <div id="host-login-modal" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 transition-opacity opacity-0 pointer-events-none duration-300">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl transform scale-95 transition-transform duration-300 border border-cafe-gold/20">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center space-x-2">
+                    <div class="w-9 h-9 rounded-xl bg-cafe-dark text-cafe-gold flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-cafe-dark">Host Portal Login</h3>
+                </div>
+                <button onclick="closeHostLoginModal()" class="w-8 h-8 rounded-full bg-cafe-bg text-cafe-dark flex items-center justify-center hover:bg-cafe-gold hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-cafe-dark/70 mb-4">Enter your Host Management PIN or credentials to access business growth, active orders, and anti-theft audits.</p>
+            
+            <form onsubmit="handleHostLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-cafe-dark mb-1">Host Username / Email</label>
+                    <input type="text" id="host-user" value="admin@bakeandbite.com" required class="w-full px-4 py-3 rounded-xl bg-cafe-bg border border-cafe-dark/10 text-sm focus:outline-none focus:border-cafe-gold font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-cafe-dark mb-1">Security PIN / Password</label>
+                    <input type="password" id="host-pass" value="1234" required class="w-full px-4 py-3 rounded-xl bg-cafe-bg border border-cafe-dark/10 text-sm focus:outline-none focus:border-cafe-gold font-medium" placeholder="••••">
+                </div>
+                <div class="bg-cafe-light p-3 rounded-xl text-[11px] text-cafe-dark/80 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-cafe-gold"></i>
+                    <span>Demo PIN: <strong>1234</strong> (Full Host Access)</span>
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-cafe-dark hover:bg-cafe-brown text-cafe-gold font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-lock-open"></i>
+                    <span>Access Host Dashboard</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC & DATA -->
+    <script>
+        // --- COMPLETE CAFE MENU DATA (BAKE & BITE) ---
+        const cafeMenu = {
+            "Pizza": {
+                icon: "fa-pizza-slice",
+                subcategories: [
+                    {
+                        name: "Veg Pizza — Medium 8\" | Large 10\"",
+                        items: [
+                            { id: "p1", name: "Margherita Pizza", prices: { Medium: 120, Large: 179 }, desc: "Classic mozzarella cheese, rich tomato herb sauce, fresh basil.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Margherita+Pizza" },
+                            { id: "p2", name: "Cheese & Corn Pizza", prices: { Medium: 139, Large: 199 }, desc: "Sweet golden corn kernels with double cheesy mozzarella layer.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Cheese+Corn+Pizza" },
+                            { id: "p3", name: "Spicy Paneer Pizza", prices: { Medium: 149, Large: 249 }, desc: "Tandoori marinated paneer cubes, capsicum, green chillies & spicy herbs.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Spicy+Paneer+Pizza" },
+                            { id: "p4", name: "Paneer Overloaded Pizza", prices: { Medium: 149, Large: 249 }, desc: "Loaded with chunks of cottage cheese, onions, and rich creamy sauce.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Paneer+Overloaded" },
+                            { id: "p5", name: "Farm House Pizza", prices: { Medium: 159, Large: 249 }, desc: "Crisp capsicum, mushrooms, fresh tomatoes, onions & black olives.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Farm+House+Pizza" },
+                            { id: "p6", name: "Spicy Mushroom Pizza", prices: { Medium: 130, Large: 199 }, desc: "Sauteed button mushrooms with spicy chili drizzle and garlic herbs.", rating: 4.6, img: "https://placehold.co/400x250/3a2618/e68a35?text=Spicy+Mushroom" },
+                            { id: "p7", name: "Veg Extravaganza Pizza", prices: { Medium: 170, Large: 270 }, desc: "Black olives, capsicum, onion, grilled mushroom, corn, paneer & extra cheese.", rating: 5.0, img: "https://placehold.co/400x250/3a2618/e68a35?text=Veg+Extravaganza" }
+                        ]
+                    },
+                    {
+                        name: "Non-Veg Pizza — Medium 8\" | Large 10\"",
+                        items: [
+                            { id: "np1", name: "Chicken Pizza", prices: { Medium: 159, Large: 269 }, desc: "Juicy diced chicken chunks with classic herb seasoning and cheese.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Chicken+Pizza" },
+                            { id: "np2", name: "BBQ Chicken Pizza", prices: { Medium: 169, Large: 279 }, desc: "Smoky barbecue grilled chicken with caramelized onions.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=BBQ+Chicken+Pizza" },
+                            { id: "np3", name: "Chicken Keema Pizza", prices: { Medium: 179, Large: 299 }, desc: "Spiced minced chicken keema with Indian aromatic herbs and cheese.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Chicken+Keema" },
+                            { id: "np4", name: "Golden Delight Pizza", prices: { Medium: 179, Large: 299 }, desc: "Barbeque chicken, golden corn, jalapenos and extra liquid cheese.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Golden+Delight" }
+                        ]
+                    }
+                ]
+            },
+            "Sandwich": {
+                icon: "fa-bread-slice",
+                subcategories: [
+                    {
+                        name: "Veg",
+                        items: [
+                            { id: "s1", name: "Veg Sandwich", prices: { Regular: 60 }, desc: "Fresh cucumbers, tomatoes, creamy mayo and crisp lettuce in toasted bread.", rating: 4.5, img: "https://placehold.co/400x250/3a2618/e68a35?text=Veg+Sandwich" },
+                            { id: "s2", name: "Club Veg Sandwich", prices: { Regular: 109 }, desc: "Triple layered toasted sandwich with veggies, cheese slice and herbs.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Club+Veg+Sandwich" },
+                            { id: "s3", name: "Zombie Sandwich", prices: { Regular: 109 }, desc: "Spicy green chutney spread, paneer bits, loaded melted cheese grill.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Zombie+Sandwich" }
+                        ]
+                    }
+                ]
+            },
+            "Burger": {
+                icon: "fa-burger",
+                subcategories: [
+                    {
+                        name: "Veg Burger",
+                        items: [
+                            { id: "b1", name: "Aloo Tikki Burger", prices: { Regular: 59 }, desc: "Crispy potato cutlet, crunchy onion, creamy mayo in toasted bun.", rating: 4.6, img: "https://placehold.co/400x250/3a2618/e68a35?text=Aloo+Tikki+Burger" },
+                            { id: "b2", name: "Veg Burger", prices: { Regular: 89 }, desc: "Signature vegetable patty with tangy burger sauce and lettuce.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Veg+Burger" },
+                            { id: "b3", name: "Royal Veg Burger", prices: { Regular: 109 }, desc: "Double patty, cheese slice, farm fresh veggies and special chef sauce.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Royal+Veg+Burger" },
+                            { id: "b4", name: "Crispy Veg Burger", prices: { Regular: 99 }, desc: "Super crunchy crumb-fried patty with spicy spread.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Crispy+Veg+Burger" }
+                        ]
+                    },
+                    {
+                        name: "Non-Veg Burger",
+                        items: [
+                            { id: "nb1", name: "Chicken Burger", prices: { Regular: 110 }, desc: "Juicy chicken patty with classic mayo and crispy lettuce.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Chicken+Burger" },
+                            { id: "nb2", name: "Royal Chicken Burger", prices: { Regular: 149 }, desc: "Gourmet chicken patty, cheese, caramelized onions and special dressing.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Royal+Chicken+Burger" },
+                            { id: "nb3", name: "Zinger Chicken Burger", prices: { Regular: 149 }, desc: "Crispy fried chicken breast fillet with spicy mayo and lettuce.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Zinger+Chicken" },
+                            { id: "nb4", name: "Royal Zinger Burger", prices: { Regular: 189 }, desc: "Double zinger fillet with double cheese and loaded spicy sauce.", rating: 5.0, img: "https://placehold.co/400x250/3a2618/e68a35?text=Royal+Zinger" }
+                        ]
+                    }
+                ]
+            },
+            "Shakes": {
+                icon: "fa-glass-water",
+                subcategories: [
+                    {
+                        name: "Milk Shakes",
+                        items: [
+                            { id: "sh1", name: "Oreo Shake", prices: { Regular: 89 }, desc: "Blended with crushed Oreo cookies, chocolate syrup and vanilla ice cream.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Oreo+Shake" },
+                            { id: "sh2", name: "KitKat Shake", prices: { Regular: 99 }, desc: "Thick creamy shake loaded with KitKat chunks and chocolate drizzle.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=KitKat+Shake" },
+                            { id: "sh3", name: "Vanilla Shake", prices: { Regular: 79 }, desc: "Classic rich vanilla bean milk shake with whipped cream.", rating: 4.6, img: "https://placehold.co/400x250/3a2618/e68a35?text=Vanilla+Shake" },
+                            { id: "sh4", name: "Strawberry Shake", prices: { Regular: 89 }, desc: "Fresh strawberry puree blended with creamy milk.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Strawberry+Shake" },
+                            { id: "sh5", name: "Butterscotch Shake", prices: { Regular: 89 }, desc: "Crunchy butterscotch praline blended in rich milk.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Butterscotch+Shake" },
+                            { id: "sh6", name: "Sharjah Shake", prices: { Regular: 130 }, desc: "Traditional Kerala style banana shake with nuts and malt.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Sharjah+Shake" },
+                            { id: "sh7", name: "Chocolate Shake", prices: { Regular: 89 }, desc: "Deep dark chocolate thick shake with cocoa dusting.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Chocolate+Shake" }
+                        ]
+                    }
+                ]
+            },
+            "Mocktails": {
+                icon: "fa-martini-glass-citrus",
+                subcategories: [
+                    {
+                        name: "Mocktails",
+                        items: [
+                            { id: "m1", name: "Mint Mocktail", prices: { Regular: 69 }, desc: "Refreshing mint leaves, lime and sparkling soda cooler.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Mint+Mocktail" },
+                            { id: "m2", name: "Black Currant", prices: { Regular: 79 }, desc: "Tangy sweet black currant crush with ice and fizz.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Black+Currant" },
+                            { id: "m3", name: "Blueberry", prices: { Regular: 79 }, desc: "Rich blueberry flavor with chilled sparkling soda.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Blueberry+Mocktail" },
+                            { id: "m4", name: "Strawberry", prices: { Regular: 79 }, desc: "Sweet and tangy strawberry fizzy refresher.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Strawberry+Mocktail" }
+                        ]
+                    }
+                ]
+            },
+            "Hot Beverages": {
+                icon: "fa-mug-hot",
+                subcategories: [
+                    {
+                        name: "Hot Beverages",
+                        items: [
+                            { id: "hb1", name: "Tea Premix", prices: { Regular: 20 }, desc: "Warm comforting Indian milk tea.", rating: 4.6, img: "https://placehold.co/400x250/3a2618/e68a35?text=Tea+Premix" },
+                            { id: "hb2", name: "Cafe Latte", prices: { Regular: 30 }, desc: "Espresso with steamed silky textured milk.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Cafe+Latte" },
+                            { id: "hb3", name: "Black Coffee", prices: { Regular: 30 }, desc: "Strong aromatic black brew without milk.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Black+Coffee" },
+                            { id: "hb4", name: "Cappuccino", prices: { Regular: 30 }, desc: "Espresso with thick airy milk foam.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Cappuccino" },
+                            { id: "hb5", name: "Hot Milk", prices: { Regular: 30 }, desc: "Pure warm wholesome milk.", rating: 4.5, img: "https://placehold.co/400x250/3a2618/e68a35?text=Hot+Milk" },
+                            { id: "hb6", name: "Mochaccino", prices: { Regular: 50 }, desc: "Coffee blended with rich chocolate syrup and steamed milk.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Mochaccino" },
+                            { id: "hb7", name: "Hot Chocolate", prices: { Regular: 50 }, desc: "Velvety warm Belgian hot chocolate drink.", rating: 5.0, img: "https://placehold.co/400x250/3a2618/e68a35?text=Hot+Chocolate" }
+                        ]
+                    }
+                ]
+            },
+            "Fries": {
+                icon: "fa-utensils",
+                subcategories: [
+                    {
+                        name: "Fries",
+                        items: [
+                            { id: "f1", name: "French Fries", prices: { Regular: 79 }, desc: "Golden crispy salted potato fries.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=French+Fries" },
+                            { id: "f2", name: "Peri Peri Fries", prices: { Regular: 99 }, desc: "Crispy fries tossed in spicy peri peri seasoning.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Peri+Peri+Fries" },
+                            { id: "f3", name: "Masala Fries", prices: { Regular: 99 }, desc: "Tossed in special Indian chaat masala and herbs.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Masala+Fries" },
+                            { id: "f4", name: "Cheese Fries", prices: { Regular: 119 }, desc: "Drenched in warm melted liquid cheddar cheese.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Cheese+Fries" }
+                        ]
+                    }
+                ]
+            },
+            "Pasta": {
+                icon: "fa-bowl-food",
+                subcategories: [
+                    {
+                        name: "Pasta",
+                        items: [
+                            { id: "pas1", name: "Masala Pasta", prices: { Regular: 80 }, desc: "Fusion style Indian masala tossed penne pasta.", rating: 4.6, img: "https://placehold.co/400x250/3a2618/e68a35?text=Masala+Pasta" },
+                            { id: "pas2", name: "Red Sauce Pasta", prices: { Regular: 120 }, desc: "Tangy tomato marinara sauce with basil and herbs.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Red+Sauce+Pasta" },
+                            { id: "pas3", name: "White Sauce Pasta", prices: { Regular: 139 }, desc: "Rich creamy bechamel sauce with garlic and cheese.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=White+Sauce+Pasta" }
+                        ]
+                    }
+                ]
+            },
+            "Maggi": {
+                icon: "fa-bowl-rice",
+                subcategories: [
+                    {
+                        name: "Maggi",
+                        items: [
+                            { id: "mag1", name: "Veg Masala Maggi", prices: { Regular: 50 }, desc: "Classic noodles with vegetables and magical tastemaker.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Veg+Masala+Maggi" },
+                            { id: "mag2", name: "Chicken Maggi", prices: { Regular: 89 }, desc: "Maggi noodles cooked with tender chicken chunks and spices.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Chicken+Maggi" },
+                            { id: "mag3", name: "Egg Maggi", prices: { Regular: 69 }, desc: "Tossed with scrambled farm fresh eggs and pepper.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Egg+Maggi" }
+                        ]
+                    }
+                ]
+            },
+            "Lime Juice": {
+                icon: "fa-lemon",
+                subcategories: [
+                    {
+                        name: "Lime Juice",
+                        items: [
+                            { id: "lj1", name: "Fresh Lime", prices: { Regular: 30 }, desc: "Refreshing sweet & salted fresh lime water/soda.", rating: 4.6, img: "https://placehold.co/400x250/3a2618/e68a35?text=Fresh+Lime" },
+                            { id: "lj2", name: "Mint Lime", prices: { Regular: 40 }, desc: "Fresh lime infused with crushed mint leaves.", rating: 4.8, img: "https://placehold.co/400x250/3a2618/e68a35?text=Mint+Lime" },
+                            { id: "lj3", name: "Ginger Lime", prices: { Regular: 30 }, desc: "Zesty lime with a kick of fresh ginger juice.", rating: 4.7, img: "https://placehold.co/400x250/3a2618/e68a35?text=Ginger+Lime" },
+                            { id: "lj4", name: "Pineapple Lime", prices: { Regular: 50 }, desc: "Tropical pineapple punch blended with fresh lime.", rating: 4.9, img: "https://placehold.co/400x250/3a2618/e68a35?text=Pineapple+Lime" }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // --- APP STATE ---
+        let currentTab = 'home';
+        let selectedCategory = 'All';
+        let searchQuery = '';
+        let cart = [];
+        let favorites = [];
+        let activePromoBanner = { title: "70% OFF", subtitle: "Super Discount", desc: "Today Only - Special Cafe Promotion on All Items" };
+        
+        // Host & Anti-Theft Simulated Data
+        let isHostLoggedIn = false;
+        let hostOrders = [
+            { id: "ORD-921", table: "Table #4", items: "Margherita Pizza (Medium), Cafe Latte", total: 150, status: "Preparing", time: "2 mins ago" },
+            { id: "ORD-920", table: "Table #2", items: "Oreo Shake, French Fries", total: 168, status: "Served", time: "12 mins ago" },
+            { id: "ORD-919", table: "Table #7", items: "White Sauce Pasta, Garlic Bread", total: 139, status: "Completed", time: "25 mins ago" },
+            { id: "ORD-918", table: "Table #1", items: "Zinger Chicken Burger, Mint Mocktail", total: 218, status: "Completed", time: "40 mins ago" }
+        ];
+
+        let antiTheftData = [
+            { ingredient: "Mozzarella Cheese (kg)", stockIn: 15.0, usedBySales: 12.4, actualPhysical: 14.1, variance: "+1.5 kg", status: "Normal", note: "Verified clean" },
+            { ingredient: "Chicken Patties (pcs)", stockIn: 80, usedBySales: 45, actualPhysical: 32, variance: "-3 pcs", status: "Warning", note: "Slight raw count mismatch" },
+            { ingredient: "Coffee Beans (kg)", stockIn: 10.0, usedBySales: 7.2, actualPhysical: 7.1, variance: "-0.1 kg", status: "Normal", note: "Accurate" },
+            { ingredient: "Pizza Dough Bases (pcs)", stockIn: 100, usedBySales: 62, actualPhysical: 38, variance: "0 pcs", status: "Secure", note: "Fully reconciled" }
+        ];
+
+        // Modal State
+        let modalCurrentItem = null;
+        let modalSelectedSize = null;
+        let modalSelectedPrice = 0;
+        let modalQty = 1;
+        let modalSugar = 'Normal';
+
+        // --- INIT ---
+        window.onload = function() {
+            renderTabContent();
+            updateCartBadge();
+        };
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Update bottom nav colors
+            ['home', 'cart', 'favorites', 'profile'].forEach(t => {
+                const el = document.getElementById(`nav-${t}`);
+                if(el) {
+                    if(t === tabName) {
+                        el.className = "flex flex-col items-center text-cafe-gold transition-all";
+                    } else {
+                        el.className = "flex flex-col items-center text-cafe-dark/60 hover:text-cafe-gold transition-all";
+                    }
+                }
+            });
+
+            renderTabContent();
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            const iconEl = document.getElementById('toast-icon');
+            
+            msgEl.innerText = msg;
+            iconEl.className = isError ? "fa-solid fa-triangle-exclamation text-red-500 text-lg" : "fa-solid fa-circle-check text-cafe-gold text-lg";
+            
+            toast.classList.remove('-translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // --- RENDER CONTENT DEPENDING ON TAB ---
+        function renderTabContent() {
+            const main = document.getElementById('main-content');
+            
+            if (currentTab === 'home') {
+                main.innerHTML = `
+                    <!-- Search Bar -->
+                    <div class="relative mb-4">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-cafe-dark/40">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="menu-search-input" value="${searchQuery}" oninput="handleSearch(this.value)" placeholder="Search pizzas, burgers, shakes..." class="w-full pl-11 pr-4 py-3 bg-white rounded-2xl border border-cafe-dark/10 text-sm focus:outline-none focus:border-cafe-gold shadow-sm font-medium">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <button onclick="clearSearch()" class="text-cafe-dark/40 hover:text-cafe-dark ${searchQuery ? '' : 'hidden'}"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Promotional Banner -->
+                    <div class="bg-gradient-to-r from-cafe-dark to-cafe-brown rounded-3xl p-5 mb-5 text-white shadow-xl relative overflow-hidden flex items-center justify-between">
+                        <div class="relative z-10 max-w-[60%]">
+                            <span class="bg-cafe-gold text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">${activePromoBanner.subtitle}</span>
+                            <h2 class="text-2xl font-black mt-2 text-white">${activePromoBanner.title}</h2>
+                            <p class="text-xs text-white/80 mt-1 line-clamp-2">${activePromoBanner.desc}</p>
+                            <button onclick="switchTab('home'); scrollToMenu();" class="mt-3 px-4 py-2 bg-cafe-gold hover:bg-cafe-goldHover text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1.5">
+                                <span>Order Now</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
+                        <div class="relative z-10 w-28 h-28 rounded-full bg-cafe-gold/20 flex items-center justify-center p-2 shadow-inner border border-cafe-gold/30">
+                            <img src="https://placehold.co/150x150/e68a35/ffffff?text=Bake+Bite" alt="Banner Promo" class="w-full h-full object-cover rounded-full">
+                        </div>
+                        <!-- Background decorative circle -->
+                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-cafe-gold/10 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+
+                    <!-- Categories Carousel Pills -->
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2.5">
+                            <h3 class="font-bold text-sm text-cafe-dark">Categories</h3>
+                            <span class="text-xs font-semibold text-cafe-gold">Explore All</span>
+                        </div>
+                        <div class="flex space-x-2 overflow-x-auto pb-2 scrollbar-none" id="category-pills">
+                            ${renderCategoryPills()}
+                        </div>
+                    </div>
+
+                    <!-- Menu Items Display Grid / List -->
+                    <div id="menu-items-container" class="space-y-4">
+                        ${renderMenuItems()}
+                    </div>
+                `;
+            } else if (currentTab === 'cart') {
+                main.innerHTML = renderCartContent();
+            } else if (currentTab === 'favorites') {
+                main.innerHTML = renderFavoritesContent();
+            } else if (currentTab === 'profile') {
+                main.innerHTML = renderProfileContent();
+            } else if (currentTab === 'host-dashboard') {
+                main.innerHTML = renderHostDashboardContent();
+            }
+        }
+
+        function renderCategoryPills() {
+            const categories = ['All', ...Object.keys(cafeMenu)];
+            return categories.map(cat => {
+                const isActive = selectedCategory === cat;
+                return `
+                    <button onclick="selectCategory('${cat}')" class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap shadow-sm flex items-center space-x-1.5 ${isActive ? 'bg-cafe-gold text-white shadow-cafe-gold/30 shadow-md' : 'bg-white text-cafe-dark border border-cafe-dark/10 hover:border-cafe-gold'}">
+                        <span>${cat}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectCategory(cat) {
+            selectedCategory = cat;
+            renderTabContent();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val.toLowerCase();
+            renderTabContent();
+        }
+
+        function clearSearch() {
+            searchQuery = '';
+            const input = document.getElementById('menu-search-input');
+            if(input) input.value = '';
+            renderTabContent();
+        }
+
+        function scrollToMenu() {
+            const el = document.getElementById('menu-items-container');
+            if(el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderMenuItems() {
+            let html = '';
+            let matchedCount = 0;
+
+            const catsToDisplay = selectedCategory === 'All' ? Object.keys(cafeMenu) : [selectedCategory];
+
+            catsToDisplay.forEach(catKey => {
+                const categoryObj = cafeMenu[catKey];
+                categoryObj.subcategories.forEach(sub => {
+                    const filteredItems = sub.items.filter(item => {
+                        return item.name.toLowerCase().includes(searchQuery) || item.desc.toLowerCase().includes(searchQuery);
+                    });
+
+                    if(filteredItems.length > 0) {
+                        matchedCount += filteredItems.length;
+                        html += `
+                            <div class="mb-4">
+                                <h4 class="text-xs font-extrabold text-cafe-dark uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                                    <i class="fa-solid ${categoryObj.icon} text-cafe-gold"></i> ${sub.name}
+                                </h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    ${filteredItems.map(item => {
+                                        const isFav = favorites.some(f => f.id === item.id);
+                                        const firstPriceKey = Object.keys(item.prices)[0];
+                                        const firstPrice = item.prices[firstPriceKey];
+                                        return `
+                                            <div onclick="openDetailModal('${item.id}', '${catKey}')" class="bg-white p-3 rounded-2xl shadow-sm border border-cafe-dark/5 flex items-center space-x-3 cursor-pointer hover:border-cafe-gold transition-all relative group">
+                                                <div class="w-20 h-20 rounded-xl overflow-hidden bg-cafe-light flex-shrink-0 relative">
+                                                    <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                                    <button onclick="event.stopPropagation(); toggleFavorite('${item.id}', '${catKey}')" class="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-xs ${isFav ? 'text-red-500' : 'text-cafe-dark/40 hover:text-red-500'} shadow">
+                                                        <i class="fa-solid fa-heart"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-center justify-between">
+                                                        <h5 class="font-bold text-cafe-dark text-sm truncate">${item.name}</h5>
+                                                    </div>
+                                                    <p class="text-[11px] text-cafe-dark/60 truncate mt-0.5">${item.desc}</p>
+                                                    <div class="flex items-center justify-between mt-2">
+                                                        <span class="text-xs font-bold text-cafe-gold">₹${firstPrice} ${Object.keys(item.prices).length > 1 ? '<span class="text-[9px] text-cafe-dark/50 font-normal">onwards</span>' : ''}</span>
+                                                        <div class="w-7 h-7 rounded-full bg-cafe-bg group-hover:bg-cafe-gold group-hover:text-white text-cafe-dark flex items-center justify-center shadow-sm transition-colors">
+                                                            <i class="fa-solid fa-plus text-xs"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            });
+
+            if(matchedCount === 0) {
+                return `
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-cafe-gold/10 rounded-full flex items-center justify-center mx-auto mb-3 text-cafe-gold text-2xl">
+                            <i class="fa-solid fa-mug-saucer"></i>
+                        </div>
+                        <h4 class="font-bold text-cafe-dark text-base">No menu items found</h4>
+                        <p class="text-xs text-cafe-dark/60 mt-1">Try searching for something else like "Pizza", "Coffee", or "Burger".</p>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        // --- ITEM DETAIL MODAL LOGIC ---
+        function openDetailModal(itemId, catKey) {
+            let foundItem = null;
+            cafeMenu[catKey].subcategories.forEach(sub => {
+                const match = sub.items.find(i => i.id === itemId);
+                if(match) foundItem = match;
+            });
+
+            if(!foundItem) return;
+
+            modalCurrentItem = foundItem;
+            modalQty = 1;
+            modalSugar = 'Normal';
+
+            document.getElementById('modal-item-title').innerText = foundItem.name;
+            document.getElementById('modal-item-img').src = foundItem.img;
+            document.getElementById('modal-item-desc').innerText = foundItem.desc;
+            document.getElementById('modal-item-rating').innerText = foundItem.rating;
+            document.getElementById('modal-qty').innerText = modalQty;
+
+            // Setup sizes
+            const sizesContainer = document.getElementById('modal-sizes');
+            const sizeWrapper = document.getElementById('modal-size-container');
+            const priceKeys = Object.keys(foundItem.prices);
+
+            if(priceKeys.length > 1 || priceKeys[0] !== 'Regular') {
+                sizeWrapper.classList.remove('hidden');
+                sizesContainer.innerHTML = priceKeys.map((sizeKey, idx) => {
+                    const isSelected = idx === 0;
+                    if(isSelected) {
+                        modalSelectedSize = sizeKey;
+                        modalSelectedPrice = foundItem.prices[sizeKey];
+                    }
+                    return `
+                        <button onclick="selectModalSize('${sizeKey}', ${foundItem.prices[sizeKey]}, this)" class="py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between ${isSelected ? 'border-cafe-gold bg-cafe-gold/10 text-cafe-dark' : 'border-cafe-dark/10 text-cafe-dark/70'}">
+                            <span>${sizeKey}</span>
+                            <span class="text-cafe-gold font-black">₹${foundItem.prices[sizeKey]}</span>
+                        </button>
+                    `;
+                }).join('');
+            } else {
+                modalSelectedSize = 'Regular';
+                modalSelectedPrice = foundItem.prices['Regular'];
+                sizeWrapper.classList.add('hidden');
+            }
+
+            updateModalTotalPrice();
+
+            const modal = document.getElementById('detail-modal');
+            const box = document.getElementById('detail-modal-box');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            box.classList.remove('translate-y-full');
+        }
+
+        function selectModalSize(sizeKey, price, btnEl) {
+            modalSelectedSize = sizeKey;
+            modalSelectedPrice = price;
+            
+            const parent = btnEl.parentElement;
+            Array.from(parent.children).forEach(child => {
+                child.className = "py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between border-cafe-dark/10 text-cafe-dark/70";
+            });
+            btnEl.className = "py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between border-cafe-gold bg-cafe-gold/10 text-cafe-dark";
+
+            updateModalTotalPrice();
+        }
+
+        function setCustomization(type, val, btnEl) {
+            if(type === 'sugar') {
+                modalSugar = val;
+                const parent = btnEl.parentElement;
+                Array.from(parent.children).forEach(child => {
+                    child.className = "py-2 rounded-xl border border-cafe-dark/20 text-cafe-dark hover:border-cafe-gold transition-all";
+                });
+                btnEl.className = "py-2 rounded-xl border border-cafe-gold bg-cafe-gold text-white transition-all";
+            }
+        }
+
+        function adjustModalQty(delta) {
+            modalQty += delta;
+            if(modalQty < 1) modalQty = 1;
+            document.getElementById('modal-qty').innerText = modalQty;
+            updateModalTotalPrice();
+        }
+
+        function updateModalTotalPrice() {
+            const total = modalSelectedPrice * modalQty;
+            document.getElementById('modal-total-price').innerText = `₹${total}`;
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detail-modal');
+            const box = document.getElementById('detail-modal-box');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            box.classList.add('translate-y-full');
+        }
+
+        function addModalItemToCart() {
+            if(!modalCurrentItem) return;
+
+            const cartItemKey = `${modalCurrentItem.id}-${modalSelectedSize}-${modalSugar}`;
+            const existingIndex = cart.findIndex(c => c.cartKey === cartItemKey);
+
+            if(existingIndex > -1) {
+                cart[existingIndex].qty += modalQty;
+            } else {
+                cart.push({
+                    cartKey: cartItemKey,
+                    id: modalCurrentItem.id,
+                    name: modalCurrentItem.name,
+                    size: modalSelectedSize,
+                    sugar: modalSugar,
+                    price: modalSelectedPrice,
+                    qty: modalQty,
+                    img: modalCurrentItem.img
+                });
+            }
+
+            updateCartBadge();
+            closeDetailModal();
+            showToast(`Added ${modalQty}x ${modalCurrentItem.name} to Cart!`);
+        }
+
+        function updateCartBadge() {
+            const totalCount = cart.reduce((sum, item) => sum + item.qty, 0);
+            document.getElementById('cart-badge').innerText = totalCount;
+            const navDot = document.getElementById('nav-cart-dot');
+            if(totalCount > 0) {
+                navDot.classList.remove('hidden');
+            } else {
+                navDot.classList.add('hidden');
+            }
+        }
+
+        // --- FAVORITES LOGIC ---
+        function toggleFavorite(itemId, catKey) {
+            let foundItem = null;
+            cafeMenu[catKey].subcategories.forEach(sub => {
+                const match = sub.items.find(i => i.id === itemId);
+                if(match) foundItem = match;
+            });
+
+            if(!foundItem) return;
+
+            const idx = favorites.findIndex(f => f.id === itemId);
+            if(idx > -1) {
+                favorites.splice(idx, 1);
+                showToast(`Removed from favorites`, true);
+            } else {
+                favorites.push(foundItem);
+                showToast(`Added ${foundItem.name} to favorites!`);
+            }
+            renderTabContent();
+        }
+
+        function renderFavoritesContent() {
+            if(favorites.length === 0) {
+                return `
+                    <div class="text-center py-16">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500 text-2xl">
+                            <i class="fa-solid fa-heart-crack"></i>
+                        </div>
+                        <h4 class="font-bold text-cafe-dark text-base">No Favorites Yet</h4>
+                        <p class="text-xs text-cafe-dark/60 mt-1">Tap the heart icon on any menu item to save it for quick ordering.</p>
+                        <button onclick="switchTab('home')" class="mt-4 px-5 py-2.5 bg-cafe-gold text-white text-xs font-bold rounded-xl shadow-md">Browse Menu</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <h3 class="font-bold text-base text-cafe-dark mb-3">Your Favorite Items</h3>
+                <div class="space-y-3">
+                    ${favorites.map(item => `
+                        <div class="bg-white p-3 rounded-2xl shadow-sm border border-cafe-dark/5 flex items-center space-x-3">
+                            <img src="${item.img}" alt="${item.name}" class="w-16 h-16 rounded-xl object-cover">
+                            <div class="flex-1 min-w-0">
+                                <h5 class="font-bold text-cafe-dark text-sm truncate">${item.name}</h5>
+                                <p class="text-[11px] text-cafe-dark/60 truncate">${item.desc}</p>
+                                <span class="text-xs font-bold text-cafe-gold mt-1 block">₹${Object.values(item.prices)[0]} onwards</span>
+                            </div>
+                            <button onclick="toggleFavorite('${item.id}', 'Pizza')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100">
+                                <i class="fa-solid fa-heart"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // --- CART & CHECKOUT LOGIC ---
+        function renderCartContent() {
+            if(cart.length === 0) {
+                return `
+                    <div class="text-center py-16">
+                        <div class="w-16 h-16 bg-cafe-gold/10 rounded-full flex items-center justify-center mx-auto mb-3 text-cafe-gold text-2xl">
+                            <i class="fa-solid fa-basket-shopping"></i>
+                        </div>
+                        <h4 class="font-bold text-cafe-dark text-base">Your Cart is Empty</h4>
+                        <p class="text-xs text-cafe-dark/60 mt-1">Scan your table QR code and add delicious items to start your order.</p>
+                        <button onclick="switchTab('home')" class="mt-4 px-5 py-2.5 bg-cafe-gold text-white text-xs font-bold rounded-xl shadow-md">Explore Menu</button>
+                    </div>
+                `;
+            }
+
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const gst = Math.round(subtotal * 0.05);
+            const grandTotal = subtotal + gst;
+
+            return `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-base text-cafe-dark">Table Order Summary</h3>
+                        <span class="text-xs font-semibold px-2.5 py-1 bg-cafe-gold/20 text-cafe-gold rounded-full">Table #4 QR Active</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        ${cart.map((item, idx) => `
+                            <div class="bg-white p-3 rounded-2xl shadow-sm border border-cafe-dark/5 flex items-center space-x-3">
+                                <img src="${item.img}" alt="${item.name}" class="w-14 h-14 rounded-xl object-cover">
+                                <div class="flex-1 min-w-0">
+                                    <h5 class="font-bold text-cafe-dark text-sm truncate">${item.name}</h5>
+                                    <p class="text-[10px] text-cafe-dark/60">Size: ${item.size} | Sugar: ${item.sugar}</p>
+                                    <span class="text-xs font-black text-cafe-gold">₹${item.price * item.qty}</span>
+                                </div>
+                                <div class="flex items-center space-x-2 bg-cafe-bg px-2 py-1 rounded-xl border border-cafe-dark/10">
+                                    <button onclick="adjustCartQty(${idx}, -1)" class="w-5 h-5 rounded-lg bg-white shadow text-xs font-bold text-cafe-dark">-</button>
+                                    <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
+                                    <button onclick="adjustCartQty(${idx}, 1)" class="w-5 h-5 rounded-lg bg-white shadow text-xs font-bold text-cafe-dark">+</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Bill Breakdown -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 space-y-2 text-xs">
+                        <div class="flex justify-between text-cafe-dark/70">
+                            <span>Item Subtotal</span>
+                            <span class="font-semibold text-cafe-dark">₹${subtotal}</span>
+                        </div>
+                        <div class="flex justify-between text-cafe-dark/70">
+                            <span>GST & Cafe Service (5%)</span>
+                            <span class="font-semibold text-cafe-dark">₹${gst}</span>
+                        </div>
+                        <div class="border-t border-cafe-dark/10 pt-2 flex justify-between text-sm font-black text-cafe-dark">
+                            <span>Grand Total</span>
+                            <span class="text-cafe-gold">₹${grandTotal}</span>
+                        </div>
+                    </div>
+
+                    <!-- Checkout Action -->
+                    <button onclick="placeOrder()" class="w-full py-3.5 bg-cafe-gold hover:bg-cafe-goldHover text-white font-bold rounded-2xl shadow-lg shadow-cafe-gold/30 transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-qrcode"></i>
+                        <span>Place QR Order (₹${grandTotal})</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function adjustCartQty(idx, delta) {
+            cart[idx].qty += delta;
+            if(cart[idx].qty <= 0) {
+                cart.splice(idx, 1);
+            }
+            updateCartBadge();
+            renderTabContent();
+        }
+
+        function placeOrder() {
+            if(cart.length === 0) return;
+            
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const grandTotal = subtotal + Math.round(subtotal * 0.05);
+            const itemsSummary = cart.map(i => `${i.qty}x ${i.name} (${i.size})`).join(', ');
+
+            // Push to host active orders
+            hostOrders.unshift({
+                id: `ORD-${Math.floor(100 + Math.random() * 900)}`,
+                table: "Table #4",
+                items: itemsSummary,
+                total: grandTotal,
+                status: "Preparing",
+                time: "Just now"
+            });
+
+            cart = [];
+            updateCartBadge();
+
+            const main = document.getElementById('main-content');
+            main.innerHTML = `
+                <div class="text-center py-12 px-4">
+                    <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner animate-bounce">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-cafe-dark">Order Placed Successfully!</h3>
+                    <p class="text-xs text-cafe-dark/70 mt-2">Your QR order for <strong>Table #4</strong> has been sent straight to the BAKE & BITE kitchen.</p>
+                    
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 my-6 text-left space-y-2 text-xs">
+                        <div class="flex justify-between"><span class="text-cafe-dark/60">Order Status:</span><span class="font-bold text-amber-600">Kitchen Preparing</span></div>
+                        <div class="flex justify-between"><span class="text-cafe-dark/60">Estimated Time:</span><span class="font-bold text-cafe-dark">12-15 Minutes</span></div>
+                        <div class="flex justify-between"><span class="text-cafe-dark/60">Payment Mode:</span><span class="font-bold text-cafe-dark">Pay at Counter / Table QR</span></div>
+                    </div>
+
+                    <button onclick="switchTab('home')" class="w-full py-3 bg-cafe-gold text-white font-bold rounded-xl shadow">Back to Menu</button>
+                </div>
+            `;
+            showToast("Order transmitted to BAKE & BITE Kitchen!");
+        }
+
+        // --- PROFILE TAB ---
+        function renderProfileContent() {
+            return `
+                <div class="space-y-4">
+                    <div class="bg-white p-5 rounded-3xl shadow-sm border border-cafe-dark/5 text-center">
+                        <div class="w-20 h-20 bg-cafe-dark text-cafe-gold rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-3 shadow border-2 border-cafe-gold">
+                            <i class="fa-solid fa-mug-hot"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-cafe-dark">BAKE & BITE Customer</h3>
+                        <p class="text-xs text-cafe-dark/60 mt-0.5">Table #4 QR Session Active</p>
+                        <div class="mt-3 inline-block px-3 py-1 bg-cafe-gold/10 text-cafe-gold text-xs font-bold rounded-full">
+                            Loyalty Tier: Coffee Connoisseur ⭐
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 space-y-3">
+                        <h4 class="font-bold text-xs text-cafe-dark uppercase tracking-wider">Table Session Info</h4>
+                        <div class="flex justify-between text-xs py-1.5 border-b border-cafe-dark/5">
+                            <span class="text-cafe-dark/60">Assigned Table</span>
+                            <span class="font-bold text-cafe-dark">Table #4 (Main Hall)</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1.5 border-b border-cafe-dark/5">
+                            <span class="text-cafe-dark/60">WiFi Network</span>
+                            <span class="font-bold text-cafe-dark">BakeBite_HighSpeed_5G</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1.5">
+                            <span class="text-cafe-dark/60">Host Assistance</span>
+                            <span class="font-bold text-cafe-gold cursor-pointer" onclick="showToast('Waiter summoned to Table #4!')">Call Waiter <i class="fa-solid fa-bell"></i></span>
+                        </div>
+                    </div>
+
+                    <button onclick="openHostLoginModal()" class="w-full py-3.5 bg-cafe-dark hover:bg-cafe-brown text-cafe-gold font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Switch to Host Dashboard</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        // --- HOST LOGIN & MANAGEMENT DASHBOARD ---
+        function openHostLoginModal() {
+            const modal = document.getElementById('host-login-modal');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function closeHostLoginModal() {
+            const modal = document.getElementById('host-login-modal');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function handleHostLogin(e) {
+            e.preventDefault();
+            const pin = document.getElementById('host-pass').value;
+            if(pin === '1234' || pin.length > 0) {
+                isHostLoggedIn = true;
+                closeHostLoginModal();
+                switchTab('host-dashboard');
+                showToast("Welcome to BAKE & BITE Host Management!");
+            } else {
+                showToast("Invalid PIN. Use 1234.", true);
+            }
+        }
+
+        let hostDashboardTab = 'orders';
+
+        function renderHostDashboardContent() {
+            const totalRevenue = hostOrders.reduce((sum, o) => sum + o.total, 0) + 12450;
+            const activeOrdersCount = hostOrders.filter(o => o.status === 'Preparing').length;
+
+            return `
+                <div class="space-y-4">
+                    <!-- Host Header Banner -->
+                    <div class="bg-cafe-dark text-white p-5 rounded-3xl shadow-lg relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="bg-cafe-gold text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">Host Dashboard</span>
+                                <h3 class="text-xl font-black mt-1">BAKE & BITE Control</h3>
+                            </div>
+                            <button onclick="switchTab('home')" class="px-3 py-1 bg-white/10 hover:bg-white/20 text-xs rounded-xl font-semibold transition-colors">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Customer View
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <div class="bg-white/10 p-3 rounded-2xl backdrop-blur">
+                                <div class="text-[10px] text-white/70 uppercase font-bold">Today Revenue</div>
+                                <div class="text-lg font-black text-cafe-gold mt-0.5">₹${totalRevenue}</div>
+                            </div>
+                            <div class="bg-white/10 p-3 rounded-2xl backdrop-blur">
+                                <div class="text-[10px] text-white/70 uppercase font-bold">Active Orders</div>
+                                <div class="text-lg font-black text-emerald-400 mt-0.5">${activeOrdersCount} Tables</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Host Sub-Nav tabs -->
+                    <div class="flex space-x-1 bg-white p-1 rounded-2xl border border-cafe-dark/10 text-xs font-bold overflow-x-auto">
+                        <button onclick="setHostSubTab('orders')" class="flex-1 py-2 px-3 rounded-xl transition-all whitespace-nowrap ${hostDashboardTab === 'orders' ? 'bg-cafe-gold text-white shadow' : 'text-cafe-dark hover:bg-cafe-bg'}">Live Orders</button>
+                        <button onclick="setHostSubTab('offers')" class="flex-1 py-2 px-3 rounded-xl transition-all whitespace-nowrap ${hostDashboardTab === 'offers' ? 'bg-cafe-gold text-white shadow' : 'text-cafe-dark hover:bg-cafe-bg'}">Offers</button>
+                        <button onclick="setHostSubTab('menu')" class="flex-1 py-2 px-3 rounded-xl transition-all whitespace-nowrap ${hostDashboardTab === 'menu' ? 'bg-cafe-gold text-white shadow' : 'text-cafe-dark hover:bg-cafe-bg'}">Menu & QR</button>
+                        <button onclick="setHostSubTab('antitheft')" class="flex-1 py-2 px-3 rounded-xl transition-all whitespace-nowrap ${hostDashboardTab === 'antitheft' ? 'bg-cafe-gold text-white shadow' : 'text-cafe-dark hover:bg-cafe-bg'}">Anti-Theft</button>
+                    </div>
+
+                    <!-- Sub Tab Content -->
+                    <div id="host-sub-content">
+                        ${renderHostSubTabContent()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function setHostSubTab(subTab) {
+            hostDashboardTab = subTab;
+            const container = document.getElementById('host-sub-content');
+            if(container) container.innerHTML = renderHostSubTabContent();
+            
+            // update pill styling
+            const tabs = ['orders', 'offers', 'menu', 'antitheft'];
+            tabs.forEach(t => {
+                // simple re-render of dashboard
+            });
+            renderTabContent();
+        }
+
+        function renderHostSubTabContent() {
+            if(hostDashboardTab === 'orders') {
+                return `
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-xs text-cafe-dark uppercase tracking-wider">Live Table Orders</h4>
+                            <span class="text-[11px] text-cafe-gold font-semibold cursor-pointer" onclick="renderTabContent()"><i class="fa-solid fa-rotate"></i> Refresh</span>
+                        </div>
+                        ${hostOrders.map((ord, idx) => `
+                            <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-cafe-dark text-sm">${ord.id} <span class="text-xs text-cafe-gold font-semibold">(${ord.table})</span></span>
+                                    <span class="text-[10px] px-2.5 py-0.5 rounded-full font-bold ${ord.status === 'Preparing' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}">${ord.status}</span>
+                                </div>
+                                <p class="text-xs text-cafe-dark/70 font-medium">${ord.items}</p>
+                                <div class="flex justify-between items-center pt-2 border-t border-cafe-dark/5 text-xs">
+                                    <span class="font-black text-cafe-dark">Total: ₹${ord.total}</span>
+                                    <div class="space-x-2">
+                                        ${ord.status === 'Preparing' ? `<button onclick="updateOrderStatus(${idx}, 'Served')" class="px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold">Mark Served</button>` : `<span class="text-cafe-dark/50"><i class="fa-solid fa-check-double text-emerald-600"></i> Done</span>`}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if(hostDashboardTab === 'offers') {
+                return `
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 space-y-3">
+                            <h4 class="font-bold text-xs text-cafe-dark uppercase tracking-wider">Create / Customize Promotional Banner</h4>
+                            <form onsubmit="handleSaveOffer(event)" class="space-y-3 text-xs">
+                                <div>
+                                    <label class="block text-cafe-dark font-bold mb-1">Discount Tag (e.g., 70% OFF)</label>
+                                    <input type="text" id="offer-title" value="${activePromoBanner.title}" required class="w-full p-2.5 rounded-xl bg-cafe-bg border border-cafe-dark/10 font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-cafe-dark font-bold mb-1">Subtitle (e.g., Super Discount)</label>
+                                    <input type="text" id="offer-subtitle" value="${activePromoBanner.subtitle}" required class="w-full p-2.5 rounded-xl bg-cafe-bg border border-cafe-dark/10 font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-cafe-dark font-bold mb-1">Banner Description</label>
+                                    <input type="text" id="offer-desc" value="${activePromoBanner.desc}" required class="w-full p-2.5 rounded-xl bg-cafe-bg border border-cafe-dark/10 font-medium">
+                                </div>
+                                <button type="submit" class="w-full py-2.5 bg-cafe-gold text-white font-bold rounded-xl shadow">Publish Promo to Customer View</button>
+                            </form>
+                        </div>
+                    </div>
+                `;
+            } else if(hostDashboardTab === 'menu') {
+                return `
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 space-y-3">
+                            <h4 class="font-bold text-xs text-cafe-dark uppercase tracking-wider">Table QR Code Generator</h4>
+                            <p class="text-xs text-cafe-dark/60">Generate printable QR codes for all tables at BAKE & BITE.</p>
+                            <div class="grid grid-cols-2 gap-2 text-center">
+                                <div class="p-3 bg-cafe-bg rounded-2xl border border-cafe-dark/10">
+                                    <div class="font-bold text-cafe-dark text-sm">Table #4 QR</div>
+                                    <div class="my-2 bg-white p-2 rounded-xl inline-block shadow-sm">
+                                        <i class="fa-solid fa-qrcode text-4xl text-cafe-dark"></i>
+                                    </div>
+                                    <button onclick="showToast('Table #4 QR downloaded!')" class="w-full py-1.5 bg-cafe-dark text-cafe-gold font-bold text-[10px] rounded-lg">Download QR</button>
+                                </div>
+                                <div class="p-3 bg-cafe-bg rounded-2xl border border-cafe-dark/10">
+                                    <div class="font-bold text-cafe-dark text-sm">Table #5 QR</div>
+                                    <div class="my-2 bg-white p-2 rounded-xl inline-block shadow-sm">
+                                        <i class="fa-solid fa-qrcode text-4xl text-cafe-dark"></i>
+                                    </div>
+                                    <button onclick="showToast('Table #5 QR downloaded!')" class="w-full py-1.5 bg-cafe-dark text-cafe-gold font-bold text-[10px] rounded-lg">Download QR</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 space-y-3">
+                            <h4 class="font-bold text-xs text-cafe-dark uppercase tracking-wider">Menu Price & Image Control</h4>
+                            <p class="text-xs text-cafe-dark/60">Select any menu item category to update prices instantly across all customer devices.</p>
+                            <button onclick="showToast('Menu price sync enabled successfully!')" class="w-full py-2.5 bg-cafe-dark text-cafe-gold font-bold text-xs rounded-xl">Sync Menu Pricing DB</button>
+                        </div>
+                    </div>
+                `;
+            } else if(hostDashboardTab === 'antitheft') {
+                return `
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-cafe-dark/5 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-xs text-cafe-dark uppercase tracking-wider"><i class="fa-solid fa-shield-halved text-cafe-gold"></i> Raw Ingredient Anti-Theft Monitor</h4>
+                                <span class="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded">Live Audit</span>
+                            </div>
+                            <p class="text-xs text-cafe-dark/60">Compares raw ingredients consumed against billed customer orders to prevent pilferage or worker wastage.</p>
+                            
+                            <div class="space-y-2.5 mt-2">
+                                ${antiTheftData.map(item => `
+                                    <div class="p-3 bg-cafe-bg rounded-2xl border border-cafe-dark/10 flex justify-between items-center text-xs">
+                                        <div>
+                                            <div class="font-bold text-cafe-dark">${item.ingredient}</div>
+                                            <div class="text-[10px] text-cafe-dark/60">Used by Sales: ${item.usedBySales} | Physical: ${item.actualPhysical}</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="font-black ${item.status === 'Warning' ? 'text-amber-600' : 'text-emerald-600'}">${item.variance}</span>
+                                            <div class="text-[9px] text-cafe-dark/50">${item.note}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <button onclick="showToast('Full Inventory Audit Report Generated & Emailed to Host!')" class="w-full py-2.5 bg-cafe-gold text-white font-bold text-xs rounded-xl shadow">Run Full Audit Check</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateOrderStatus(idx, newStatus) {
+            hostOrders[idx].status = newStatus;
+            renderTabContent();
+            showToast(`Order ${hostOrders[idx].id} marked as ${newStatus}`);
+        }
+
+        function handleSaveOffer(e) {
+            e.preventDefault();
+            activePromoBanner.title = document.getElementById('offer-title').value;
+            activePromoBanner.subtitle = document.getElementById('offer-subtitle').value;
+            activePromoBanner.desc = document.getElementById('offer-desc').value;
+            
+            showToast("Promotional banner updated successfully!");
+            switchTab('home');
+        }
+    </script>
+</body>
+</html>
